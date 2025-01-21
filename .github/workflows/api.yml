@@ -1,0 +1,61 @@
+name: API build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: lint
+        uses: ./.github/actions/go-lint
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: unit test
+        uses: ./.github/actions/go-unit-test
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    timeout-minutes: 10
+    needs: [test, lint]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: build/push
+        uses: ./.github/actions/build-image
+        with:
+          dockerfile: Dockerfile
+          image: github-proxy-api
+          cosign_key: ${{ secrets.COSIGN_KEY }}
+          cosign_password: ${{ secrets.COSIGN_PASSWORD }}

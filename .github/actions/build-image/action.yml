@@ -1,0 +1,60 @@
+name: build/publish docker image
+description: build/publish docker image
+
+inputs:
+  context:
+    description: "build context path"
+    required: true
+    default: .
+  dockerfile:
+    description: "docker file path"
+    required: true
+  image:
+    description: "image name"
+    required: true
+  cosign_key:
+    description: "Cosign signing key"
+    required: true
+  cosign_password:
+    description: "Cosign password"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Log in to the Container registry
+      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Build and push Docker images
+      id: push
+      uses: docker/build-push-action@v3
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        push: true
+        tags: ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+
+    - name: install Cosign
+      uses: sigstore/cosign-installer@v3.7.0
+
+    - name: verify cosign install
+      run: |
+        cosign version
+      shell: bash
+
+    - name: sign container image
+      run: |
+        cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+      shell: bash
+      env:
+        COSIGN_KEY: ${{ inputs.cosign_key }}
+        COSIGN_PASSWORD: ${{ inputs.cosign_password }}
+
+    - name: verify image signature
+      shell: bash
+      run: |
+        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}  

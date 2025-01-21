@@ -1,0 +1,36 @@
+name: lint
+description: lint module
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        check-latest: true
+        go-version-file: 'go.mod'
+        cache-dependency-path: 'go.sum'
+
+    - name: go format
+      shell: bash
+      working-directory: .
+      run: gofmt -s -w . && git diff --exit-code
+
+    - name: go mod tidy
+      shell: bash
+      working-directory: .
+      run: go mod tidy && git diff --exit-code
+
+    - name: go mod
+      shell: bash
+      working-directory: .
+      run: go mod download && git diff --exit-code
+
+    - name: go mod verify
+      shell: bash
+      working-directory: .
+      run: go mod verify
+
+    - name: go vet
+      shell: bash
+      working-directory: .
+      run: go vet ./...
