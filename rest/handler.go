@@ -11,9 +11,8 @@ func NewHandler() Handler {
 }
 
 func (h Handler) Health(writer http.ResponseWriter, request *http.Request) {
-	if _, err := writer.Write([]byte(`OK`)); err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 	writer.WriteHeader(http.StatusOK)
+	if _, err := writer.Write([]byte(`OK`)); err != nil {
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
