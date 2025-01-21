@@ -1,18 +1,69 @@
 package rest
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
+
+	"github.com/andrelince/github-proxy/pkg/ghcli"
+	"github.com/andrelince/github-proxy/rest/definitions"
 )
 
-type Handler struct{}
+type Handler struct {
+	githubClient ghcli.GithubClient
+}
 
-func NewHandler() Handler {
-	return Handler{}
+func NewHandler(githubClient ghcli.GithubClient) Handler {
+	return Handler{
+		githubClient: githubClient,
+	}
 }
 
 func (h Handler) Health(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 	if _, err := writer.Write([]byte(`OK`)); err != nil {
-		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(writer, "internal Server Error", http.StatusInternalServerError)
 	}
+}
+
+func (h Handler) CreateRepo(writer http.ResponseWriter, request *http.Request) {
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		http.Error(writer, "failed to read request body", http.StatusBadRequest)
+		return
+	}
+	defer request.Body.Close()
+
+	var repoRequest definitions.CreateRepositoryRequest
+	if err := json.Unmarshal(body, &repoRequest); err != nil {
+		http.Error(writer, "invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	out, err := h.githubClient.CreateRepository(request.Context(), ghcli.RepositoryInput{
+		Name:        repoRequest.Name,
+		Description: repoRequest.Description,
+		Private:     repoRequest.Private,
+	})
+
+	if err != nil {
+		http.Error(writer, "failed to create repository", http.StatusInternalServerError)
+		return
+	}
+
+	resp := definitions.RepositoryResponse{
+		ID:          out.ID,
+		Name:        out.Name,
+		Description: out.Description,
+		Private:     out.Private,
+	}
+
+	bytes, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(writer, "failed construct response", http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusCreated)
+	writer.Write(bytes)
 }

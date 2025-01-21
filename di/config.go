@@ -3,6 +3,7 @@ package di
 import (
 	"github.com/andrelince/github-proxy/config"
 	"github.com/andrelince/github-proxy/pkg/env"
+	"github.com/andrelince/github-proxy/pkg/ghcli"
 	"github.com/andrelince/github-proxy/rest"
 	"github.com/gorilla/mux"
 	"go.uber.org/dig"
@@ -23,6 +24,13 @@ func buildConfig(c *dig.Container) error {
 		return err
 	}
 
+	// provide github client
+	if err := c.Provide(func(conf config.Config) ghcli.GithubClient {
+		return ghcli.NewGitHubClient(conf.GitHubAuthToken)
+	}); err != nil {
+		return err
+	}
+
 	// provide rest api handler
 	if err := c.Provide(rest.NewHandler); err != nil {
 		return err
@@ -30,7 +38,7 @@ func buildConfig(c *dig.Container) error {
 
 	// provide rest api server
 	if err := c.Provide(rest.NewRest); err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil
