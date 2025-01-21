@@ -1,0 +1,9 @@
+version: '3'
+services:
+  github-proxy:
+    image: cosmtrek/air
+    working_dir: /github-proxy
+    ports:
+      - 8080:${SRV_PORT}
+    volumes:
+      - .:/github-proxy/
