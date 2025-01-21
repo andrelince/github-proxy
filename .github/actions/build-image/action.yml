@@ -23,18 +23,6 @@ runs:
         username: ${{ github.actor }}
         password: ${{ github.token }}
 
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: |
-          ghcr.io/andrelince/${{ inputs.image }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-
     - name: Build and push Docker images
       id: push
       uses: docker/build-push-action@v3
@@ -42,5 +30,25 @@ runs:
         context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile }}
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+
+    - name: install Cosign
+      uses: sigstore/cosign-installer
+
+    - name: verify cosign install
+      run: |
+        cosign version
+      shell: bash
+
+    - name: sign container image
+      run: |
+        cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+      shell: bash
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+
+    - name: verify image signature
+      shell: bash
+      run: |
+        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}  
