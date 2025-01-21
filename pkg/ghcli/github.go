@@ -11,6 +11,7 @@ import (
 //go:generate mockgen -destination=./mocks/mock_github_client.go -package=ghcli_mocks github.com/andrelince/github-proxy/pkg/ghcli GithubClient
 type GithubClient interface {
 	CreateRepository(ctx context.Context, in RepositoryInput) (Repository, error)
+	ListRepositories(ctx context.Context) ([]Repository, error)
 }
 
 type GHClient struct {
@@ -45,4 +46,28 @@ func (c *GHClient) CreateRepository(ctx context.Context, in RepositoryInput) (Re
 		Description: ptr.Value(out.Description, ""),
 		Private:     ptr.Value(out.Private, false),
 	}, nil
+}
+
+func (c *GHClient) ListRepositories(ctx context.Context) ([]Repository, error) {
+	out, resp, err := c.client.Repositories.List(ctx, "andrelince", &github.RepositoryListOptions{
+		Visibility: "public",
+	})
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list repositories: %s", resp.Status)
+	}
+
+	res := make([]Repository, len(out))
+	for i := range out {
+		res[i] = Repository{
+			ID:          ptr.Value(out[i].ID, 0),
+			Name:        ptr.Value(out[i].Name, ""),
+			Description: ptr.Value(out[i].Description, ""),
+			Private:     ptr.Value(out[i].Private, false),
+		}
+	}
+
+	return res, nil
 }

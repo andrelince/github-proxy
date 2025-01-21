@@ -55,3 +55,18 @@ func (mr *MockGithubClientMockRecorder) CreateRepository(ctx, in any) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockGithubClient)(nil).CreateRepository), ctx, in)
 }
+
+// ListRepositories mocks base method.
+func (m *MockGithubClient) ListRepositories(ctx context.Context) ([]ghcli.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRepositories", ctx)
+	ret0, _ := ret[0].([]ghcli.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListRepositories indicates an expected call of ListRepositories.
+func (mr *MockGithubClientMockRecorder) ListRepositories(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositories", reflect.TypeOf((*MockGithubClient)(nil).ListRepositories), ctx)
+}

@@ -111,6 +111,34 @@ func (a *restFeature) iCreateARepository(name, description string) error {
 	return nil
 }
 
+func (a *restFeature) iListRepositories() error {
+	a.ghcliMock.
+		EXPECT().
+		ListRepositories(gomock.Any()).
+		Times(1).
+		Return([]ghcli.Repository{{ID: 1, Name: "dummy"}}, nil)
+
+	reqURL, err := url.JoinPath(a.baseURL, "/repository")
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	a.resp.Code = resp.StatusCode
+	return nil
+}
+
 func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name:                 "rest api features",
@@ -125,6 +153,7 @@ func TestFeatures(t *testing.T) {
 			ctx.Step(`^i send a GET request to "([^"]*)"$`, api.iSendAGetRequestTo)
 			ctx.Step(`^the response code should be "([^"]*)"$`, api.theResponseCodeShouldBe)
 			ctx.Step(`^i create a repository with name "([^"]*)" and description "([^"]*)"$`, api.iCreateARepository)
+			ctx.Step(`^i list all the repositories$`, api.iListRepositories)
 
 			ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 				return ctx, api.server.Shutdown(ctx)
