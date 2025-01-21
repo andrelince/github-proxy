@@ -12,6 +12,12 @@ inputs:
   image:
     description: "image name"
     required: true
+  cosign_key:
+    description: "Cosign signing key"
+    required: true
+  cosign_password:
+    description: "Cosign password"
+    required: true
 
 runs:
   using: "composite"
@@ -33,7 +39,7 @@ runs:
         tags: ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
 
     - name: install Cosign
-      uses: sigstore/cosign-installer
+      uses: sigstore/cosign-installer@v3.7.0
 
     - name: verify cosign install
       run: |
@@ -45,8 +51,8 @@ runs:
         cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
       shell: bash
       env:
-        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
-        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        COSIGN_KEY: ${{ inputs.cosign_key }}
+        COSIGN_PASSWORD: ${{ inputs.cosign_password }}
 
     - name: verify image signature
       shell: bash
