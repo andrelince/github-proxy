@@ -59,3 +59,16 @@ jobs:
           image: github-proxy-api
           cosign_key: ${{ secrets.COSIGN_KEY }}
           cosign_password: ${{ secrets.COSIGN_PASSWORD }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      contents: read
+    timeout-minutes: 10
+    needs: [build]
+    steps:
+      - name: deploy
+        uses: ./.github/actions/deploy
+        with:
+          digest: ${{needs.build.outputs.digest}}

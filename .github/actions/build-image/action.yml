@@ -19,6 +19,11 @@ inputs:
     description: "Cosign password"
     required: true
 
+outputs:
+  digest:
+    value: ${{ steps.build_and_push.outputs.digest }}
+    description: built image digest
+
 runs:
   using: "composite"
   steps:
@@ -57,4 +62,4 @@ runs:
     - name: verify image signature
       shell: bash
       run: |
-        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}  
+        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}
