@@ -12,3 +12,10 @@ type RepositoryResponse struct {
 	Description string `json:"description"`
 	Private     bool   `json:"private"`
 }
+
+type PRResponse struct {
+	ID          int64  `json:"id"`
+	Title       string `json:"title"`
+	Body        string `json:"body"`
+	Contributor string `json:"contributor"`
+}

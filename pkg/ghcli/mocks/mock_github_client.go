@@ -70,6 +70,21 @@ func (mr *MockGithubClientMockRecorder) DeleteRepository(ctx, name any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepository", reflect.TypeOf((*MockGithubClient)(nil).DeleteRepository), ctx, name)
 }
 
+// ListOpenPRs mocks base method.
+func (m *MockGithubClient) ListOpenPRs(ctx context.Context, owner, repo string, num int) ([]ghcli.PullRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOpenPRs", ctx, owner, repo, num)
+	ret0, _ := ret[0].([]ghcli.PullRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOpenPRs indicates an expected call of ListOpenPRs.
+func (mr *MockGithubClientMockRecorder) ListOpenPRs(ctx, owner, repo, num any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOpenPRs", reflect.TypeOf((*MockGithubClient)(nil).ListOpenPRs), ctx, owner, repo, num)
+}
+
 // ListRepositories mocks base method.
 func (m *MockGithubClient) ListRepositories(ctx context.Context) ([]ghcli.Repository, error) {
 	m.ctrl.T.Helper()

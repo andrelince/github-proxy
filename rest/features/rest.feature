@@ -15,3 +15,7 @@ Feature: Validate api routes
   Scenario: Delete a user repository
     When i delete a repository with name "name"
     Then the response code should be "204"
+
+  Scenario: List open PRs
+    When i list "5" open prs from "golang" "go"
+    Then the response code should be "200"

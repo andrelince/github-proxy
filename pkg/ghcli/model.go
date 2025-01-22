@@ -12,3 +12,10 @@ type Repository struct {
 	Description string
 	Private     bool
 }
+
+type PullRequest struct {
+	ID          int64
+	Title       string
+	Body        string
+	Contributor string
+}
