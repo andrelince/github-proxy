@@ -7,3 +7,7 @@ Feature: Validate api routes
   Scenario: Create repository in github
     When i create a repository with name "dummy" and description "dummy description"
     Then the response code should be "201"
+
+  Scenario: List user public repositories in github
+    When i list all the repositories
+    Then the response code should be "200"

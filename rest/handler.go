@@ -67,3 +67,31 @@ func (h Handler) CreateRepo(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusCreated)
 	writer.Write(bytes)
 }
+
+func (h Handler) ListRepos(writer http.ResponseWriter, request *http.Request) {
+	out, err := h.githubClient.ListRepositories(request.Context())
+	if err != nil {
+		http.Error(writer, "failed to get repositories", http.StatusInternalServerError)
+		return
+	}
+
+	resp := make([]definitions.RepositoryResponse, len(out))
+
+	for i := range out {
+		resp[i] = definitions.RepositoryResponse{
+			ID:          out[i].ID,
+			Name:        out[i].Name,
+			Description: out[i].Description,
+			Private:     out[i].Private,
+		}
+	}
+
+	bytes, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(writer, "failed construct response", http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	writer.Write(bytes)
+}
