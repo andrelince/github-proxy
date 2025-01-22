@@ -37,6 +37,8 @@ runs:
         file: ${{ inputs.dockerfile }}
         push: true
         tags: ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+        outputs:
+          digest: ${{ steps.build_and_push.outputs.digest }}
 
     - name: install Cosign
       uses: sigstore/cosign-installer@v3.7.0
@@ -48,7 +50,7 @@ runs:
 
     - name: sign container image
       run: |
-        cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+        cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}
       shell: bash
       env:
         COSIGN_KEY: ${{ inputs.cosign_key }}
@@ -57,4 +59,4 @@ runs:
     - name: verify image signature
       shell: bash
       run: |
-        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}  
+        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}  
