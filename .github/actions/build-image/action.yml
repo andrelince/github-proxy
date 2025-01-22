@@ -30,7 +30,7 @@ runs:
         password: ${{ github.token }}
 
     - name: Build and push Docker images
-      id: push
+      id: build_and_push
       uses: docker/build-push-action@v3
       with:
         context: ${{ inputs.context }}
@@ -48,7 +48,7 @@ runs:
 
     - name: sign container image
       run: |
-        cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
+        cosign sign -y --key env://COSIGN_KEY ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}
       shell: bash
       env:
         COSIGN_KEY: ${{ inputs.cosign_key }}
@@ -57,4 +57,4 @@ runs:
     - name: verify image signature
       shell: bash
       run: |
-        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}  
+        cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}  
