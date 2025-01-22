@@ -3,7 +3,7 @@ kind: ClusterPolicy
 metadata:
   name: verify-signed-images
 spec:
-  validationFailureAction: Enforce # Use the capitalized "Enforce" instead of "enforce"
+  validationFailureAction: Enforce
   background: true
   rules:
     - name: verify-signature
