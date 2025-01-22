@@ -9,6 +9,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: validate digest
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.digest }}" ]; then
+          echo "Error: Digest is empty. Exiting deployment."
+          exit 1
+        fi
     - name: start minikube
       id: minikube
       uses: medyagh/setup-minikube@latest

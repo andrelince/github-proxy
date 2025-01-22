@@ -46,6 +46,8 @@ jobs:
       contents: read
     timeout-minutes: 10
     needs: [test, lint]
+    outputs:
+      digest: ${{ steps.build_image.outputs.digest }}
     steps:
       - name: checkout
         uses: actions/checkout@v4

@@ -21,7 +21,7 @@ inputs:
 
 outputs:
   digest:
-    value: ${{ steps.build_and_push.outputs.digest }}
+    value: ""
     description: built image digest
 
 runs:
@@ -63,3 +63,8 @@ runs:
       shell: bash
       run: |
         cosign verify --key cosign.pub ghcr.io/andrelince/${{ inputs.image }}@${{ steps.build_and_push.outputs.digest }}
+
+    - name: export outputs
+      shell: bash
+      run: |
+        echo "digest=${{ steps.build_and_push.outputs.digest }}" >> $GITHUB_OUTPUT
