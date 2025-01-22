@@ -2,8 +2,10 @@ package rest
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/andrelince/github-proxy/pkg/ghcli"
 	"github.com/andrelince/github-proxy/rest/definitions"
@@ -94,4 +96,22 @@ func (h Handler) ListRepos(writer http.ResponseWriter, request *http.Request) {
 
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(bytes)
+}
+
+func (h Handler) DeleteRepo(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	name := vars["name"]
+
+	if name == "" && strings.HasPrefix(name, "testonly") {
+		// extra safety check
+		http.Error(writer, "invalid repository name", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.githubClient.DeleteRepository(request.Context(), name); err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusNoContent)
 }
