@@ -12,6 +12,7 @@ import (
 type GithubClient interface {
 	CreateRepository(ctx context.Context, in RepositoryInput) (Repository, error)
 	ListRepositories(ctx context.Context) ([]Repository, error)
+	DeleteRepository(ctx context.Context, name string) error
 }
 
 type GHClient struct {
@@ -34,8 +35,10 @@ func (c *GHClient) CreateRepository(ctx context.Context, in RepositoryInput) (Re
 		Private:     github.Bool(in.Private),
 	})
 	if err != nil {
+		fmt.Println(err)
 		return Repository{}, err
 	} else if resp.StatusCode != http.StatusCreated {
+		fmt.Println(resp)
 		return Repository{}, fmt.Errorf("failed to create repository: %s", resp.Status)
 	} else if out == nil {
 		return Repository{}, fmt.Errorf("repository is empty")
@@ -70,4 +73,14 @@ func (c *GHClient) ListRepositories(ctx context.Context) ([]Repository, error) {
 	}
 
 	return res, nil
+}
+
+func (c *GHClient) DeleteRepository(ctx context.Context, name string) error {
+	resp, err := c.client.Repositories.Delete(ctx, "andrelince", name)
+	if err != nil {
+		return err
+	} else if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("failed to delete repository: %s", resp.Status)
+	}
+	return nil
 }

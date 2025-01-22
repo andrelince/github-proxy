@@ -30,6 +30,11 @@ func NewRest(
 		Methods(http.MethodGet).
 		HandlerFunc(r.ListRepos)
 
+	router.
+		Path("/repository/{name}").
+		Methods(http.MethodDelete).
+		HandlerFunc(r.DeleteRepo)
+
 	corsOpts := cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS"},

@@ -139,6 +139,34 @@ func (a *restFeature) iListRepositories() error {
 	return nil
 }
 
+func (a *restFeature) iDeleteRepository(name string) error {
+	a.ghcliMock.
+		EXPECT().
+		DeleteRepository(gomock.Any(), name).
+		Times(1).
+		Return(nil)
+
+	reqURL, err := url.JoinPath(a.baseURL, "/repository", name)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, reqURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	a.resp.Code = resp.StatusCode
+	return nil
+}
+
 func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name:                 "rest api features",
@@ -154,6 +182,7 @@ func TestFeatures(t *testing.T) {
 			ctx.Step(`^the response code should be "([^"]*)"$`, api.theResponseCodeShouldBe)
 			ctx.Step(`^i create a repository with name "([^"]*)" and description "([^"]*)"$`, api.iCreateARepository)
 			ctx.Step(`^i list all the repositories$`, api.iListRepositories)
+			ctx.Step(`^i delete a repository with name "([^"]*)"$`, api.iDeleteRepository)
 
 			ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 				return ctx, api.server.Shutdown(ctx)
