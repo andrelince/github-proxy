@@ -68,6 +68,11 @@ jobs:
     timeout-minutes: 10
     needs: [build]
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: deploy
         uses: ./.github/actions/deploy
         with:
