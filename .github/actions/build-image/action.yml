@@ -37,8 +37,6 @@ runs:
         file: ${{ inputs.dockerfile }}
         push: true
         tags: ghcr.io/andrelince/${{ inputs.image }}:${{ github.sha }}
-        outputs:
-          digest: ${{ steps.build_and_push.outputs.digest }}
 
     - name: install Cosign
       uses: sigstore/cosign-installer@v3.7.0
