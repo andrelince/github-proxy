@@ -3,7 +3,6 @@ package ghcli
 import (
 	"context"
 	"fmt"
-	"github.com/andrelince/github-proxy/pkg/ptr"
 	"github.com/google/go-github/v55/github"
 	"net/http"
 )
@@ -13,6 +12,7 @@ type GithubClient interface {
 	CreateRepository(ctx context.Context, in RepositoryInput) (Repository, error)
 	ListRepositories(ctx context.Context) ([]Repository, error)
 	DeleteRepository(ctx context.Context, name string) error
+	ListOpenPRs(ctx context.Context, owner, repo string, num int) ([]PullRequest, error)
 }
 
 type GHClient struct {
@@ -44,10 +44,10 @@ func (c *GHClient) CreateRepository(ctx context.Context, in RepositoryInput) (Re
 		return Repository{}, fmt.Errorf("repository is empty")
 	}
 	return Repository{
-		ID:          ptr.Value(out.ID, 0),
-		Name:        ptr.Value(out.Name, ""),
-		Description: ptr.Value(out.Description, ""),
-		Private:     ptr.Value(out.Private, false),
+		ID:          out.GetID(),
+		Name:        out.GetName(),
+		Description: out.GetDescription(),
+		Private:     out.GetPrivate(),
 	}, nil
 }
 
@@ -56,7 +56,6 @@ func (c *GHClient) ListRepositories(ctx context.Context) ([]Repository, error) {
 		Visibility: "public",
 	})
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	} else if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to list repositories: %s", resp.Status)
@@ -65,10 +64,10 @@ func (c *GHClient) ListRepositories(ctx context.Context) ([]Repository, error) {
 	res := make([]Repository, len(out))
 	for i := range out {
 		res[i] = Repository{
-			ID:          ptr.Value(out[i].ID, 0),
-			Name:        ptr.Value(out[i].Name, ""),
-			Description: ptr.Value(out[i].Description, ""),
-			Private:     ptr.Value(out[i].Private, false),
+			ID:          out[i].GetID(),
+			Name:        out[i].GetName(),
+			Description: out[i].GetDescription(),
+			Private:     out[i].GetPrivate(),
 		}
 	}
 
@@ -83,4 +82,34 @@ func (c *GHClient) DeleteRepository(ctx context.Context, name string) error {
 		return fmt.Errorf("failed to delete repository: %s", resp.Status)
 	}
 	return nil
+}
+
+func (c *GHClient) ListOpenPRs(ctx context.Context, owner, repo string, num int) ([]PullRequest, error) {
+	if num > 10 { // enforce max number
+		num = 10
+	}
+	out, resp, err := c.client.PullRequests.List(ctx, owner, repo, &github.PullRequestListOptions{
+		State: "open",
+		ListOptions: github.ListOptions{
+			PerPage: num,
+			Page:    1,
+		},
+	})
+	if err != nil {
+		return nil, err
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list prs: %s", resp.Status)
+	}
+
+	res := make([]PullRequest, len(out))
+	for i := range out {
+		res[i] = PullRequest{
+			ID:          out[i].GetID(),
+			Title:       out[i].GetTitle(),
+			Body:        out[i].GetBody(),
+			Contributor: out[i].GetUser().GetName(),
+		}
+	}
+
+	return res, nil
 }

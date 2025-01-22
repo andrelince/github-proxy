@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -167,6 +168,43 @@ func (a *restFeature) iDeleteRepository(name string) error {
 	return nil
 }
 
+func (a *restFeature) iListPRs(num int, owner, repo string) error {
+	a.ghcliMock.
+		EXPECT().
+		ListOpenPRs(gomock.Any(), owner, repo, num).
+		Times(1).
+		Return([]ghcli.PullRequest{{ID: 1}}, nil)
+
+	u, err := url.Parse(a.baseURL)
+	if err != nil {
+		return err
+	}
+
+	u.Path, err = url.JoinPath(u.Path, "pull-request", owner, repo)
+	if err != nil {
+		return err
+	}
+
+	query := u.Query()
+	query.Set("num", strconv.Itoa(num))
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	a.resp.Code = resp.StatusCode
+	return nil
+}
+
 func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name:                 "rest api features",
@@ -183,6 +221,7 @@ func TestFeatures(t *testing.T) {
 			ctx.Step(`^i create a repository with name "([^"]*)" and description "([^"]*)"$`, api.iCreateARepository)
 			ctx.Step(`^i list all the repositories$`, api.iListRepositories)
 			ctx.Step(`^i delete a repository with name "([^"]*)"$`, api.iDeleteRepository)
+			ctx.Step(`^i list "([^"]*)" open prs from "([^"]*)" "([^"]*)"$`, api.iListPRs)
 
 			ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 				return ctx, api.server.Shutdown(ctx)

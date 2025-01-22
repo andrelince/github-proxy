@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/andrelince/github-proxy/pkg/ghcli"
@@ -114,4 +115,46 @@ func (h Handler) DeleteRepo(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	writer.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) ListOpenPRs(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	owner := vars["owner"]
+	repository := vars["repository"]
+
+	if owner == "" || repository == "" {
+		http.Error(writer, "invalid owner/repository name", http.StatusBadRequest)
+		return
+	}
+
+	num, err := strconv.Atoi(request.URL.Query().Get("num"))
+	if num == 0 {
+		num = 10
+	}
+
+	out, err := h.githubClient.ListOpenPRs(request.Context(), owner, repository, num)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp := make([]definitions.PRResponse, len(out))
+
+	for i := range out {
+		resp[i] = definitions.PRResponse{
+			ID:          out[i].ID,
+			Title:       out[i].Title,
+			Body:        out[i].Body,
+			Contributor: out[i].Contributor,
+		}
+	}
+
+	bytes, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(writer, "failed construct response", http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	writer.Write(bytes)
 }
