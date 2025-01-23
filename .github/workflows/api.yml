@@ -55,6 +55,7 @@ jobs:
           fetch-depth: 0
 
       - name: build/push
+        id: build_image
         uses: ./.github/actions/build-image
         with:
           dockerfile: Dockerfile
