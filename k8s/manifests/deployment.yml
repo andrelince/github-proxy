@@ -15,3 +15,6 @@ spec:
       containers:
         - name: github-proxy-api
           image: ghcr.io/andrelince/github-proxy-api@${DIGEST}
+          env:
+            - name: GH_AUTH_TOKEN
+              value: "token here or from secret"
