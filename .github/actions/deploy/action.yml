@@ -1,0 +1,37 @@
+name: deploy manifests
+description: deploy manifests
+
+inputs:
+  digest:
+    description: "built image digest"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: validate digest
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.digest }}" ]; then
+          echo "Error: Digest is empty. Exiting deployment."
+          exit 1
+        fi
+    - name: start minikube
+      id: minikube
+      uses: medyagh/setup-minikube@latest
+    - name: ping cluster
+      shell: bash
+      run: kubectl get pods -A
+    - name: setup cluster
+      shell: bash
+      run: |
+        kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.11.1/install.yaml
+        kubectl create secret generic cosign-public-key --from-file=cosign.pub=cosign.pub -n kyverno
+        kubectl apply -f k8s/cluster/clusterpolicy.yml
+    - name: deploy manifests
+      shell: bash
+      run: |
+        echo "deploying with digest: ${{ inputs.digest }}"
+        export DIGEST=${{ inputs.digest }}
+        envsubst < k8s/manifests/deployment.yml | kubectl apply -f -
+        kubectl wait --for=condition=ready pod -l app=github-proxy-api --timeout=30s
