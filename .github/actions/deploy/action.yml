@@ -33,5 +33,5 @@ runs:
       run: |
         echo "deploying with digest: ${{ inputs.digest }}"
         export DIGEST=${{ inputs.digest }}
-        envsubst < k8s/manifests/deployment.yaml | kubectl apply -f -
+        envsubst < k8s/manifests/deployment.yml | kubectl apply -f -
         kubectl wait --for=condition=ready pod -l app=github-proxy-api --timeout=30s
